@@ -3,6 +3,7 @@
 #include <string>
 #include <sstream>
 #include <vector>
+
 using namespace std;
 
 /*
@@ -15,8 +16,8 @@ Exemplo na folha, olha lá!
 
 /*
     O que falta fazer: 
-    - transformar fuct3 para decimal antes de salvar
-    - pegar o rd, rs1, rs2, imm (das instruções que tem isso)
+    mostrar saída que o professor pede.
+    Só da uma analisada se peguei os bits corretos para as intruções
 */
 
 string hexToBin(string linha){
@@ -79,27 +80,79 @@ vector<vector<string>> lerTipos(){
 
 // verifica o opcode e fuct3
 void checkInstrucoes(string codigo, vector<vector<string>>& tabelaTipos, vector<vector<string>>& tabelaInstrucoes){
-    string tipo = codigo.substr(codigo.length()-7, codigo.length());
+    string tipo = codigo.substr(25, 7);
     for(int i = 0; i < tabelaTipos.size(); i++){
         if(!tabelaTipos.empty()){
             if(tipo == tabelaTipos[i][0]){
+                
                 vector<string> novaLinha;
-                novaLinha.push_back(tabelaTipos[i][0]);
-                if(tabelaTipos[i][1] == "R" || tabelaTipos[i][1] == "I" || tabelaTipos[i][1] == "S" || tabelaTipos[i][1] == "B" || tabelaTipos[i][1] == "J" || tabelaTipos[i][1] == "U"){
-                    novaLinha.push_back(tabelaTipos[i][1]); // instrucao
-                    novaLinha.push_back("-"); //RD - precisa implementar
-                    if(tabelaTipos[i][1] != "J" || tabelaTipos[i][1] != "U" ){
-                        //precisa converter pra decimal antes de salvar 
-                        novaLinha.push_back(tabelaTipos[i][2]); // funct3
-                    }
+                novaLinha.push_back(tabelaTipos[i][1]); // instrucao
+                novaLinha.push_back(tabelaTipos[i][0]); // opcode
+
+                //rd
+                if(tabelaTipos[i][1] != "S" || tabelaTipos[i][1] != "B" ){
+                    novaLinha.push_back(codigo.substr(21, 4)); 
+                }else{
+                    novaLinha.push_back("---");
                 }
+
+                //funct3 e rs1
+                if(tabelaTipos[i][1] != "J" && tabelaTipos[i][1] != "U" ){
+                    //precisa converter pra decimal antes de salvar 
+                    novaLinha.push_back(tabelaTipos[i][2]); // funct3
+                    novaLinha.push_back(codigo.substr(12, 5)); //rs1
+                }else{
+                    novaLinha.push_back("---");
+                }
+                
+                //rs2
+                if(tabelaTipos[i][1] == "R" || tabelaTipos[i][1] == "S" || tabelaTipos[i][1] == "B"){
+                    novaLinha.push_back(codigo.substr(7, 5)); 
+                }else{
+                    novaLinha.push_back("---");
+                }
+
+                //imm
+                if(tabelaTipos[i][1] == "I"){
+                    novaLinha.push_back(codigo.substr(0, 12)); 
+                }
+
+                if(tabelaTipos[i][1] == "S"){
+                    string imm_11_5 = codigo.substr(0, 7);
+                    string imm_4_0 = codigo.substr(20, 5); 
+                    novaLinha.push_back(imm_11_5+imm_4_0); 
+                }
+
+                if(tabelaTipos[i][1] == "B"){
+                    string imm_12 = codigo.substr(0, 1);
+                    string imm_10_5 = codigo.substr(1, 6);
+                    string imm_4_1 = codigo.substr(20, 4);
+                    string imm_11 = codigo.substr(24, 1); 
+                    novaLinha.push_back(imm_12 + imm_11 + imm_10_5 + imm_4_1 + "0"); 
+                }
+
+                if(tabelaTipos[i][1] == "U"){
+                    novaLinha.push_back(codigo.substr(0, 20)); 
+                }
+
+                if(tabelaTipos[i][1] == "J"){
+                    string imm_20 = codigo.substr(0, 1);
+                    string imm_10_1 = codigo.substr(1, 10);
+                    string imm_11 = codigo.substr(11, 1);
+                    string imm_19_12 = codigo.substr(12, 8);
+                    novaLinha.push_back(imm_20 + imm_19_12 + imm_11 + imm_10_1 + "0");
+                }
+                
                 tabelaInstrucoes.push_back(novaLinha);
+                
                 break;
             }
         }
 
     }
 }
+
+
 
 //peguei do chat so pra imprimir rapidao, pode apagar e fazer outro se quiser
 void imprimirMatriz(const vector<vector<string>>& matriz) {
@@ -142,7 +195,6 @@ int main(){
     while(getline(codigoEmBin, linha)){
         checkInstrucoes(linha,tabelaTipos,tabelaInstrucoes);
     }
-    cout << tabelaInstrucoes.size() << endl;
     imprimirMatriz(tabelaInstrucoes);
     return 0;
 }
