@@ -1,0 +1,1 @@
+oupper(c)
