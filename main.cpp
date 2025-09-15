@@ -78,6 +78,10 @@ vector<vector<string>> lerTipos(){
     return tabela;
 }
 
+int binToDec(const string& bin){
+    return stoi(bin, nullptr, 2);
+}
+
 // verifica o opcode e fuct3
 void checkInstrucoes(string codigo, vector<vector<string>>& tabelaTipos, vector<vector<string>>& tabelaInstrucoes){
     string tipo = codigo.substr(25, 7);
@@ -89,58 +93,67 @@ void checkInstrucoes(string codigo, vector<vector<string>>& tabelaTipos, vector<
                 novaLinha.push_back(tabelaTipos[i][1]); // instrucao
                 novaLinha.push_back(tabelaTipos[i][0]); // opcode
 
-                //rd
-                if(tabelaTipos[i][1] != "S" || tabelaTipos[i][1] != "B" ){
-                    novaLinha.push_back(codigo.substr(21, 4)); 
+                // rd
+                if(tabelaTipos[i][1] != "S" && tabelaTipos[i][1] != "B" ){
+                    novaLinha.push_back(to_string(binToDec(codigo.substr(20, 5)))); 
                 }else{
                     novaLinha.push_back("---");
                 }
 
-                //funct3 e rs1
+                // funct3
                 if(tabelaTipos[i][1] != "J" && tabelaTipos[i][1] != "U" ){
-                    //precisa converter pra decimal antes de salvar 
-                    novaLinha.push_back(tabelaTipos[i][2]); // funct3
-                    novaLinha.push_back(codigo.substr(12, 5)); //rs1
+                    novaLinha.push_back(to_string(binToDec(codigo.substr(17, 3)))); // funct3 bits [14-12]
+                    novaLinha.push_back(to_string(binToDec(codigo.substr(12, 5)))); // rs1 bits [19-15]
                 }else{
+                    novaLinha.push_back("---");
                     novaLinha.push_back("---");
                 }
                 
-                //rs2
+                // rs2
                 if(tabelaTipos[i][1] == "R" || tabelaTipos[i][1] == "S" || tabelaTipos[i][1] == "B"){
-                    novaLinha.push_back(codigo.substr(7, 5)); 
+                    novaLinha.push_back(to_string(binToDec(codigo.substr(7, 5)))); // rs2 bits [24-20]
                 }else{
                     novaLinha.push_back("---");
                 }
 
-                //imm
+                // imm I
                 if(tabelaTipos[i][1] == "I"){
-                    novaLinha.push_back(codigo.substr(0, 12)); 
+                    string imm = codigo.substr(0, 12); 
+                    novaLinha.push_back(to_string(binToDec(imm))); 
                 }
 
+                // imm S
                 if(tabelaTipos[i][1] == "S"){
                     string imm_11_5 = codigo.substr(0, 7);
                     string imm_4_0 = codigo.substr(20, 5); 
-                    novaLinha.push_back(imm_11_5+imm_4_0); 
+                    string imm = imm_11_5 + imm_4_0;
+                    novaLinha.push_back(to_string(binToDec(imm))); 
                 }
 
+                // imm B
                 if(tabelaTipos[i][1] == "B"){
                     string imm_12 = codigo.substr(0, 1);
                     string imm_10_5 = codigo.substr(1, 6);
                     string imm_4_1 = codigo.substr(20, 4);
                     string imm_11 = codigo.substr(24, 1); 
-                    novaLinha.push_back(imm_12 + imm_11 + imm_10_5 + imm_4_1 + "0"); 
+                    string imm = imm_12 + imm_11 + imm_10_5 + imm_4_1 + "0";
+                    novaLinha.push_back(to_string(binToDec(imm))); 
                 }
 
+                // imm U
                 if(tabelaTipos[i][1] == "U"){
-                    novaLinha.push_back(codigo.substr(0, 20)); 
+                    string imm = codigo.substr(0, 20); 
+                    novaLinha.push_back(to_string(binToDec(imm))); 
                 }
 
+                // imm J
                 if(tabelaTipos[i][1] == "J"){
                     string imm_20 = codigo.substr(0, 1);
                     string imm_10_1 = codigo.substr(1, 10);
                     string imm_11 = codigo.substr(11, 1);
                     string imm_19_12 = codigo.substr(12, 8);
-                    novaLinha.push_back(imm_20 + imm_19_12 + imm_11 + imm_10_1 + "0");
+                    string imm = imm_20 + imm_19_12 + imm_11 + imm_10_1 + "0";
+                    novaLinha.push_back(to_string(binToDec(imm))); 
                 }
                 
                 tabelaInstrucoes.push_back(novaLinha);
@@ -154,20 +167,49 @@ void checkInstrucoes(string codigo, vector<vector<string>>& tabelaTipos, vector<
 
 
 
-//peguei do chat so pra imprimir rapidao, pode apagar e fazer outro se quiser
 void imprimirMatriz(const vector<vector<string>>& matriz) {
     for (const auto& linha : matriz) {
         for (const auto& celula : linha) {
             // Troque '\t' por " "
-            std::cout << celula << " "; 
+            cout << celula << " "; 
         }
-        std::cout << std::endl;
+        cout << endl;
+    }
+}
+
+void imprimirInstrucoes(const vector<vector<string>>& instrucoes, const vector<string>& originais) {
+    for (size_t i = 0; i < instrucoes.size(); i++) {
+        cout << "A instrucao " << originais[i] 
+             << " formato = " << instrucoes[i][0];
+
+        // rd
+        if(instrucoes[i][2] != "---")
+            cout << ", rd = " << instrucoes[i][2];
+
+        // funct3
+        if(instrucoes[i][3] != "---")
+            cout << ", f3 = " << instrucoes[i][3];
+
+        // rs1
+        if(instrucoes[i][4] != "---")
+            cout << ", rs1 = " << instrucoes[i][4];
+
+        // rs2
+        if(instrucoes[i][5] != "---")
+            cout << ", rs2 = " << instrucoes[i][5];
+
+        // imm
+        if(instrucoes[i].size() > 6)
+            cout << ", imed = " << instrucoes[i][6];
+        cout << endl;
     }
 }
 
 
 int main(){
-    ifstream arquivo("fib_rec_hex.txt");
+    vector<string> originais;
+
+    ifstream arquivo("fib_rec_bin.txt");
     if(!arquivo.is_open()){
         cout<<"Erro ao abrir o arquivo!"<<endl;
         return 1;
@@ -178,7 +220,11 @@ int main(){
     string linha, bin;
     while(getline(arquivo, linha)){
         if(isHex(linha)){
+            originais.push_back("0x" + linha);
             binText << hexToBin(linha) << endl;;
+        } else {
+            originais.push_back(linha);
+            binText << linha << endl;
         }
     }
     arquivo.close();
@@ -193,8 +239,9 @@ int main(){
     }
 
     while(getline(codigoEmBin, linha)){
-        checkInstrucoes(linha,tabelaTipos,tabelaInstrucoes);
+        checkInstrucoes(linha, tabelaTipos, tabelaInstrucoes);
     }
-    imprimirMatriz(tabelaInstrucoes);
+
+    imprimirInstrucoes(tabelaInstrucoes, originais);
     return 0;
 }
